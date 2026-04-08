@@ -8,13 +8,21 @@ from nltk.util import ngrams
 from collections import Counter
 from sentence_transformers import SentenceTransformer, util
 import tempfile
+import os
+from dotenv import load_dotenv
+
+# Load .env in local dev; Render will use environment variables
+load_dotenv()
+
+HF_TOKEN = os.environ.get("HF_TOKEN")
+if not HF_TOKEN:
+    raise ValueError("HF_TOKEN not set. Set it in .env or Render environment variables.")
 
 app = Flask(__name__)
 
-nltk.download("punkt")
+nltk.download("punkt", quiet=True)
 
-# ✅ Load model ONCE (important for performance)
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", token=HF_TOKEN)
 
 MIN_PHRASE_FREQ = 2
 MIN_PHRASE_LEN = 12
@@ -79,9 +87,8 @@ def analyze():
             columns=keywords
         )
 
-        # ✅ Save to temp file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
-        df.to_excel(temp_file.name)
+        df.to_excel(temp_file.name, index=True)
 
         return send_file(
             temp_file.name,
@@ -94,4 +101,6 @@ def analyze():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Use Render's PORT environment variable or default to 5000
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
