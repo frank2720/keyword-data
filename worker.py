@@ -59,10 +59,10 @@ def extract_phrases(text, min_n=2, max_n=4):
     return phrases
 
 
-def process_job(job):
-    job_id = job["id"]
-    urls = json.loads(job["urls"])
-    print(f"Processing job {job_id}")
+def process_job(kwr):
+    kwr_id = kwr["id"]
+    urls = json.loads(kwr["urls"])
+    print(f"Processing analysis request {kwr_id}")
 
     all_phrases = []
     for url in urls:
@@ -89,17 +89,17 @@ def process_job(job):
     )
 
     temp_dir = tempfile.gettempdir()
-    file_path = os.path.join(temp_dir, f"job_{job_id}.xlsx")
+    file_path = os.path.join(temp_dir, f"kwr_{kwr_id}.xlsx")
     df.to_excel(file_path, index=True)
     return file_path
 
 
 
-def send_file_to_laravel(job_id, file_path):
+def send_file_to_laravel(kwr_id, file_path):
     try:
         with open(file_path, "rb") as f:
             files = {"file": f}
-            data = {"job_id": job_id}
+            data = {"kwr_id": kwr_id}
             response = requests.post(LARAVEL_UPLOAD_URL, files=files, data=data)
             if response.status_code == 200:
                 res = response.json()
